@@ -2,10 +2,12 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <title>戦国 天下行脚</title>
 <style>
-html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
 canvas{background:#000;display:block;image-rendering:pixelated}
 #touch{position:fixed;inset:0;pointer-events:none;display:none}
@@ -18,6 +20,16 @@ canvas{background:#000;display:block;image-rendering:pixelated}
 #tP{right:16px;top:16px;width:46px;height:46px;font-size:14px}
 #rot{display:none;position:fixed;left:0;right:0;top:12px;text-align:center;color:#fff;font:bold 16px sans-serif;pointer-events:none}
 @media (orientation:portrait) and (pointer:coarse){#rot{display:block}}
+/* スマホ横画面：画面の高さに合わせてボタンを配置 */
+@media (orientation:landscape) and (pointer:coarse){
+ #stick{left:max(10px,env(safe-area-inset-left));bottom:8px;width:40vh;height:40vh;background:rgba(255,255,255,.08)}
+ #knob{width:16vh;height:16vh;margin:-8vh 0 0 -8vh}
+ #tA{right:max(12px,env(safe-area-inset-right));bottom:6vh;width:24vh;height:24vh}
+ #tJ{right:calc(max(12px,env(safe-area-inset-right)) + 27vh);bottom:3vh;width:20vh;height:20vh}
+ #tS{right:calc(max(12px,env(safe-area-inset-right)) + 9vh);bottom:33vh;width:17vh;height:17vh}
+ #tP{right:auto;left:50%;margin-left:-5.5vh;top:6px;width:11vh;height:11vh}
+ .tb{font-size:4.5vh;opacity:.85}
+}
 </style>
 </head>
 <body>
@@ -99,6 +111,12 @@ function confirmPressed(){if(tapped){tapped=false;return true;}return pr('atk')|
 
 const isTouch=matchMedia('(pointer:coarse)').matches;
 if(isTouch)document.getElementById('touch').style.display='block';
+addEventListener('orientationchange',()=>setTimeout(resize,250));
+// スマホ：最初のタッチで全画面＋横向き固定（対応している端末のみ）
+let fsTried=false;
+addEventListener('pointerdown',()=>{if(!isTouch||fsTried)return;fsTried=true;const el=document.documentElement;
+  try{const r=el.requestFullscreen&&el.requestFullscreen({navigationUI:'hide'});if(r&&r.then)r.then(()=>{try{screen.orientation.lock('landscape').catch(()=>{});}catch(e){}setTimeout(resize,300);}).catch(()=>{});}catch(e){}},{capture:true});
+addEventListener('contextmenu',e=>e.preventDefault());
 const stick=document.getElementById('stick'),knob=document.getElementById('knob');let stickId=null;
 function stickSet(e){const r=stick.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const m=Math.hypot(dx,dy),mx=r.width*.36;if(m>mx){dx*=mx/m;dy*=mx/m;}knob.style.transform='translate('+dx+'px,'+dy+'px)';const th=r.width*.11;
   for(const [n,v] of [['left',dx<-th],['right',dx>th],['up',dy<-th],['down',dy>th]]){if(v&&!touchIn[n])latch['T_'+n]=true;touchIn[n]=v;}}
